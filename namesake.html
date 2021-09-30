@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Namesake of Melbourne Suburb Names</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 100%;
+			height: 100%;
+		}
+	</style>
+	<style>
+		#map { width: 100%; height: 100%; }
+		.info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }
+		.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
+	</style>
+
+	
+</head>
+<body>
+
+<div id='map'></div>
+
+<script src="./data/melbournesuburbetymologywithgeometry.geojson" type="text/javascript"></script>
+
+<script>
+	var map = L.map('map').setView([-37.80899, 144.9823], 10);
+
+	L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		id: 'mapbox/light-v9',
+		tileSize: 512,
+		zoomOffset: -1
+	}).addTo(map);
+
+	var info = L.control();
+
+	info.onAdd = function (map) {
+		this._div = L.DomUtil.create('div', 'info');
+		this.update();
+		return this._div;
+	};
+
+	info.update = function (props) {
+		this._div.innerHTML = '<h4>Melbourne Suburb Name Language Origin</h4>' +  (props ?
+			'<b>' + props.LOCALITY + '</b><br />' + props.BROAD_CATEGORY
+			: 'Hover over a suburb');
+	};
+
+	info.addTo(map);
+
+	function getColor(d) {
+		return  d == 'Aboriginal clan'	? '#c7eae5' :
+				d == 'Action'	? '#a50026' :
+				d == 'Body part'	? '#d73027' :
+				d == 'Colour'  ? '#f46d43' :
+				d == 'Function of place'  ? '#fdae61' :
+				d == 'Historic event or place'  ?  '#fee090':
+				d == 'Industry'   ? '#ffffbf' :
+				d == 'Local estate'   ? '#e0f3f8' :
+				d == 'Nature'   ? '#abd9e9' :
+				d == 'Other local places'   ? '#74add1' :
+				d == 'Person'   ?  '#4575b4':
+				d == 'Place outside Australia'   ?  '#313695':
+				d == 'Portmanteau'   ? '#003c30' :
+				d == 'Shop'   ? '#FED976' :
+				d == 'Unknown'   ? '#f5f5f5' :
+							'#f5f5f5';
+	}
+
+	function style(feature) {
+		return {
+			weight: 2,
+			opacity: 1,
+			color: 'white',
+			dashArray: '3',
+			fillOpacity: 0.7,
+			fillColor: getColor(feature.properties.BROAD_CATEGORY)
+		};
+	}
+
+	function highlightFeature(e) {
+		var layer = e.target;
+
+		layer.setStyle({
+			weight: 5,
+			color: '#666',
+			dashArray: '',
+			fillOpacity: 0.7
+		});
+
+		if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+			layer.bringToFront();
+		}
+
+		info.update(layer.feature.properties);
+	}
+
+	var geojson;
+
+	function resetHighlight(e) {
+		geojson.resetStyle(e.target);
+		info.update();
+	}
+
+	function zoomToFeature(e) {
+		map.fitBounds(e.target.getBounds());
+	}
+
+	function onEachFeature(feature, layer) {
+		layer.on({
+			mouseover: highlightFeature,
+			mouseout: resetHighlight,
+			click: zoomToFeature
+		});
+	}
+
+	geojson = L.geoJson(melbsuburbnames, {
+		style: style,
+		onEachFeature: onEachFeature
+	}).addTo(map);
+
+	map.attributionControl.addAttribution('Suburb boundary data &copy; <a href="http://data.vic.gov.au">State Government of Victoria</a>');
+
+// Legend
+	var legend = L.control({position: 'bottomright'});
+    legend.onAdd = function (map) {
+
+		var div = L.DomUtil.create('div', 'info legend');
+			labels = ['<strong>Language(s) of Origin</strong>'],
+			categories = ['Indigenous','English','Scottish','Irish','Greek','Welsh','German','Italian','Turkish','Portugese','Nuenonne','Malay','Tamil','Arabic'];
+
+		for (var i = 0; i < categories.length; i++) {
+
+            div.innerHTML += 
+            labels.push(
+                '<i class="circle" style="background:' + getColor(categories[i]) + '"></i> ' +
+            (categories[i] ? categories[i] : '+'));
+
+        }
+		
+		div.innerHTML = labels.join('<br>');
+		
+    return div;
+    };
+    legend.addTo(map);
+	
+</script>
+
+</body>
+</html>
