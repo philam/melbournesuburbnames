@@ -2,17 +2,17 @@
 <html>
 <head>
 	
-	<title>Namesake of Melbourne Suburb Namesake</title>
-
+	<title>Namesake of Melbourne Suburb Names</title>
+​
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	
 	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
-
+​
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
-
-
+​
+​
 	<style>
 		html, body {
 			height: 100%;
@@ -28,18 +28,18 @@
 		.info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }
 		.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
 	</style>
-
+​
 	
 </head>
 <body>
-
+​
 <div id='map'></div>
-
+​
 <script src="./data/melbournesuburbetymologywithgeometry.geojson" type="text/javascript"></script>
-
+​
 <script>
 	var map = L.map('map').setView([-37.80899, 144.9823], 10);
-
+	
 	L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
 		maxZoom: 18,
 		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
@@ -58,7 +58,7 @@
 	};
 
 	info.update = function (props) {
-		this._div.innerHTML = '<h4>Melbourne Suburb Namesake</h4>' +  (props ?
+		this._div.innerHTML = '<h4>Melbourne Suburb Name Language Origin</h4>' +  (props ?
 			'<b>' + props.LOCALITY + '</b><br />' + props.BROAD_CATEGORY
 			: 'Hover over a suburb');
 	};
@@ -97,7 +97,7 @@
 
 	function highlightFeature(e) {
 		var layer = e.target;
-
+		
 		layer.setStyle({
 			weight: 5,
 			color: '#666',
@@ -136,22 +136,44 @@
 		onEachFeature: onEachFeature
 	}).addTo(map);
 
-	map.attributionControl.addAttribution('Suburb boundary data &copy; <a href="http://data.vic.gov.au">State Government of Victoria</a>');
+	map.attributionControl.addAttribution('Suburb boundary data &copy; <a href="http://data.vic.gov.au">State Government of Victoria</a>, Many thanks to Jayden of Smart Cities Transport for assisting with the code');
+
+	// create a mapping of category to layers
+	var categoriesLayers = {};
+	Object.values(geojson._layers).forEach(function (layer) {
+		var layers = categoriesLayers[layer.feature.properties.BROAD_CATEGORY] || [];
+		layers.push(layer);
+		categoriesLayers[layer.feature.properties.BROAD_CATEGORY] = layers;
+	});
+	// functions to highlight/reset all layers in a category
+	function highlightCategory(category) {
+		categoriesLayers[category].forEach(function (layer) {
+			highlightFeature({target: layer});
+		});
+	}
+
+	function resetCategory(category) {
+		categoriesLayers[category].forEach(function (layer) {
+			resetHighlight({target: layer});
+		});
+	}
 
 // Legend
 	var legend = L.control({position: 'bottomright'});
     legend.onAdd = function (map) {
 
 		var div = L.DomUtil.create('div', 'info legend');
-			labels = ['<strong>Language(s) of Origin</strong>'],
+			labels = ['<strong>Namesake</strong>'],
 			categories = ['Aboriginal clan','Action','Body part','Colour','Function of place','Historic event or place','Industry','Local estate','Nature','Other local places','Person','Place outside Australia','Portmanteau','Ship','Unknown'];
 
 		for (var i = 0; i < categories.length; i++) {
 
-            div.innerHTML += 
+            div.innerHTML +=
             labels.push(
+                '<span onmouseover="highlightCategory(\''+categories[i]+'\')" onmouseout="resetCategory(\''+categories[i]+'\')">' +
                 '<i class="circle" style="background:' + getColor(categories[i]) + '"></i> ' +
-            (categories[i] ? categories[i] : '+'));
+            (categories[i] ? categories[i] : '+') +
+            '</span>');
 
         }
 		
