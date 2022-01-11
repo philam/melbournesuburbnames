@@ -57,9 +57,9 @@
 		return this._div;
 	};
 
-	info.update = function (props) {
-		this._div.innerHTML = '<h4>Melbourne Suburb Name Language Origin</h4>' +  (props ?
-			'<b>' + props.LOCALITY + '</b><br />' + props.BROAD_CATEGORY
+		info.update = function (props) {
+		this._div.innerHTML = '<h4>Melbourne Suburb Name Origin</h4>' +  (props ?
+			'<b>' + props.LOCALITY + '</b><br />' + props.BROAD_CATEGORY + '</b><br />' + props.DETAILS
 			: 'Hover over a suburb');
 	};
 
